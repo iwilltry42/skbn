@@ -102,10 +102,6 @@ github.com/jmespath/go-jmespath
 # github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be
 ## explicit
 github.com/json-iterator/go
-# github.com/maorfr/skbn v0.0.0-20190316071936-3d8a7af7e620
-## explicit
-github.com/maorfr/skbn/pkg/skbn
-github.com/maorfr/skbn/pkg/utils
 # github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd
 ## explicit
 github.com/modern-go/concurrent

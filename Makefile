@@ -23,7 +23,7 @@ lint:
 	@golangci-lint run -D $(GOLANGCI_LINT_DISABLED_LINTERS) $(LINT_DIRS)
 
 # Build skbn binary
-build: fmt vet
+build: fmt vet lint
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags $(LDFLAGS) -o bin/skbn cmd/skbn.go
 
 # Build skbn docker image
