@@ -1,4 +1,4 @@
-FROM alpine:3.8
+FROM alpine:3.12
 RUN apk --no-cache add ca-certificates
 COPY skbn /usr/local/bin/skbn
 RUN addgroup -g 1001 -S skbn \
