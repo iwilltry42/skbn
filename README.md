@@ -1,10 +1,12 @@
-[![Release](https://img.shields.io/github/release/maorfr/skbn.svg)](https://github.com/iwilltry42/skbn/releases)
-[![Travis branch](https://img.shields.io/travis/maorfr/skbn/master.svg)](https://travis-ci.org/maorfr/skbn)
-[![Docker Pulls](https://img.shields.io/docker/pulls/maorfr/skbn.svg)](https://hub.docker.com/r/maorfr/skbn/)
+[![Release](https://img.shields.io/github/release/iwilltry42/skbn.svg)](https://github.com/iwilltry42/skbn/releases)
+[![Travis branch](https://img.shields.io/travis/iwilltry42/skbn/master.svg)](https://travis-ci.org/iwilltry42/skbn)
+[![Docker Pulls](https://img.shields.io/docker/pulls/iwilltry42/skbn.svg)](https://hub.docker.com/r/iwilltry42/skbn/)
 [![Go Report Card](https://goreportcard.com/badge/github.com/iwilltry42/skbn)](https://goreportcard.com/report/github.com/iwilltry42/skbn)
-[![license](https://img.shields.io/github/license/maorfr/skbn.svg)](https://github.com/iwilltry42/skbn/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/iwilltry42/skbn.svg)](https://github.com/iwilltry42/skbn/blob/master/LICENSE)
 
 # Skbn
+
+Original project: [maorfr/skbn](https://github.com/maorfr/skbn)
 
 Skbn is a tool for copying files and directories between Kubernetes and cloud storage providers. It is named after the 1981 video game [Sokoban](https://en.wikipedia.org/wiki/Sokoban).
 Skbn uses an in-memory buffer for the copy process, to avoid excessive memory consumption.
@@ -24,12 +26,12 @@ Skbn currently supports the following providers:
 
 ### From a release
 
-Download the latest release from the [Releases page](https://github.com/iwilltry42/skbn/releases) or use it with a [Docker image](https://hub.docker.com/r/maorfr/skbn)
+Download the latest release from the [Releases page](https://github.com/iwilltry42/skbn/releases) or use it with a [Docker image](https://hub.docker.com/r/iwilltry42/skbn)
 
 ### From source
 
 ```
-mkdir -p $GOPATH/src/github.com/maorfr && cd $_
+mkdir -p $GOPATH/src/github.com/iwilltry42 && cd $_
 git clone https://github.com/iwilltry42/skbn.git && cd skbn
 make
 ```
