@@ -159,6 +159,7 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 				if len(errc) != 0 {
 					return
 				}
+				log.Printf("UPLOADING %s -> %s", fromPath, toPath)
 				defer log.Printf("[%s/%d] done: %s://%s -> %s://%s", currentLinePadded, totalFiles, srcPrefix, fromPath, dstPrefix, toPath)
 				err := Upload(dstClient, dstPrefix, toPath, fromPath, pr)
 				if err != nil {
