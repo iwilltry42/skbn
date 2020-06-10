@@ -9,6 +9,7 @@ services:
 deploy:
 - provider: script
   skip_cleanup: true
+  before_script: make ci-setup
   script: curl -sL https://git.io/goreleaser | bash
   on:
     tags: true
