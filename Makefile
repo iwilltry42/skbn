@@ -17,6 +17,10 @@ IMAGE_TAG ?= $(GIT_TAG)
 GOLANGCI_LINT_DISABLED_LINTERS := "" # disabling typecheck, because it currently (06.09.2019) fails with Go 1.13
 # Rules for directory list as input for the golangci-lint program
 LINT_DIRS := $(DIRS) $(foreach dir,$(REC_DIRS),$(dir)/...)
+# Go Package required
+PKG_GOLANGCI_LINT_VERSION := 1.25.0
+PKG_GOLANGCI_LINT_SCRIPT := https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh
+PKG_GOLANGCI_LINT := github.com/golangci/golangci-lint/cmd/golangci-lint@v${PKG_GOLANGCI_LINT_VERSION}
 
 all: fmt lint build docker push
 
@@ -58,3 +62,7 @@ dist:
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags $(LDFLAGS) -o skbn.exe cmd/skbn.go
 	tar -zcvf $(DIST)/skbn-windows-$(GIT_TAG).tgz skbn.exe
 	rm skbn.exe
+
+ci-setup:
+	@echo "Installing Go tools..."
+	curl -sfL $(PKG_GOLANGCI_LINT_SCRIPT) | sh -s -- -b ${GOPATH}/bin v$(PKG_GOLANGCI_LINT_VERSION)
