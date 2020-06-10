@@ -113,14 +113,9 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 	}
 	bwgSize := int(math.Min(float64(parallel), float64(totalFiles))) // Very stingy :)
 	bwg := utils.NewBoundedWaitGroup(bwgSize)
-	errc := make(chan error, 1)
 	currentLine := 0
 	failureCount := 0
 	for _, ftp := range fromToPaths {
-
-		if len(errc) != 0 {
-			break
-		}
 
 		bwg.Add(1)
 		currentLine++
@@ -131,15 +126,8 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 		go DownloadUpload(srcClient, dstClient, srcPrefix, ftp.FromPath, dstPrefix, ftp.ToPath, currentLinePadded, totalFiles, bufferSize, &failureCount, &bwg)
 	}
 	bwg.Wait()
-	if len(errc) != 0 {
-		// This is not exactly the correct behavior
-		// There may be more than 1 error in the channel
-		// But first let's make it work
-		err := <-errc
-		close(errc)
-		if err != nil {
-			return err
-		}
+	if failureCount > 0 {
+		return fmt.Errorf("Copying failed for %d files: Check the logs for more information", failureCount)
 	}
 	return nil
 }
