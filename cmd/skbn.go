@@ -64,8 +64,12 @@ func NewCpCmd(out io.Writer) *cobra.Command {
 	f.IntVarP(&c.parallel, "parallel", "p", 1, "number of files to copy in parallel. set this flag to 0 for full parallelism")
 	f.Float64VarP(&c.bufferSize, "buffer-size", "b", 6.75, "in memory buffer size (MB) to use for files copy (buffer per file)")
 
-	cmd.MarkFlagRequired("src")
-	cmd.MarkFlagRequired("dst")
+	if err := cmd.MarkFlagRequired("src"); err != nil {
+		log.Fatalln("Failed to mark flag required")
+	}
+	if err := cmd.MarkFlagRequired("dst"); err != nil {
+		log.Fatalln("Failed to mark flag required")
+	}
 
 	return cmd
 }
