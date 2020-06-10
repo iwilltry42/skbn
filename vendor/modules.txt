@@ -156,6 +156,9 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
+# golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
+## explicit
+golang.org/x/sync/errgroup
 # golang.org/x/sys v0.0.0-20181218192612-074acd46bca6
 golang.org/x/sys/unix
 golang.org/x/sys/windows

@@ -25,6 +25,7 @@ require (
 	github.com/spf13/pflag v1.0.3 // indirect
 	go.opencensus.io v0.19.1 // indirect
 	golang.org/x/oauth2 v0.0.0-20190226205417-e64efc72b421 // indirect
+	golang.org/x/sync v0.0.0-20190227155943-e225da77a7e6
 	google.golang.org/api v0.1.0
 	google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19 // indirect
 	gopkg.in/djherbis/nio.v2 v2.0.3
