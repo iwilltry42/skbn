@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"path/filepath"
 
-	"github.com/maorfr/skbn/pkg/utils"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/iwilltry42/skbn/pkg/utils"
 
 	"github.com/djherbis/buffer"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/djherbis/nio.v2"
 )
 
@@ -113,8 +115,11 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 	bwg := utils.NewBoundedWaitGroup(bwgSize)
 	errc := make(chan error, 1)
 	currentLine := 0
+	failureCount := 0
 	for _, ftp := range fromToPaths {
 
+		log.Infof("@@@ FTP: %s -> %s", ftp.FromPath, ftp.ToPath)
+		log.Infof(">>> errc %+v (len: %d)", errc, len(errc))
 		if len(errc) != 0 {
 			break
 		}
@@ -125,47 +130,12 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 		totalDigits := utils.CountDigits(totalFiles)
 		currentLinePadded := utils.LeftPad2Len(currentLine, 0, totalDigits)
 
-		go func(srcClient, dstClient interface{}, srcPrefix, fromPath, dstPrefix, toPath, currentLinePadded string, totalFiles int) {
-
-			if len(errc) != 0 {
-				return
-			}
-
-			newBufferSize := (int64)(bufferSize * 1024 * 1024) // may not be super accurate
-			buf := buffer.New(newBufferSize)
-			pr, pw := nio.Pipe(buf)
-
-			log.Printf("[%s/%d] copy: %s://%s -> %s://%s", currentLinePadded, totalFiles, srcPrefix, fromPath, dstPrefix, toPath)
-
-			go func() {
-				defer pw.Close()
-				if len(errc) != 0 {
-					return
-				}
-				err := Download(srcClient, srcPrefix, fromPath, pw)
-				if err != nil {
-					log.Println(err, fmt.Sprintf(" src: file: %s", fromPath))
-					errc <- err
-				}
-			}()
-
-			go func() {
-				defer pr.Close()
-				defer bwg.Done()
-				if len(errc) != 0 {
-					return
-				}
-				defer log.Printf("[%s/%d] done: %s://%s -> %s://%s", currentLinePadded, totalFiles, srcPrefix, fromPath, dstPrefix, toPath)
-				err := Upload(dstClient, dstPrefix, toPath, fromPath, pr)
-				if err != nil {
-					log.Println(err, fmt.Sprintf(" dst: file: %s", toPath))
-					errc <- err
-				}
-			}()
-		}(srcClient, dstClient, srcPrefix, ftp.FromPath, dstPrefix, ftp.ToPath, currentLinePadded, totalFiles)
+		go DownloadUpload(srcClient, dstClient, srcPrefix, ftp.FromPath, dstPrefix, ftp.ToPath, currentLinePadded, totalFiles, bufferSize, &failureCount, &bwg)
 	}
+	log.Println("Waiting for group")
 	bwg.Wait()
 	if len(errc) != 0 {
+		log.Println("Waiting for err")
 		// This is not exactly the correct behavior
 		// There may be more than 1 error in the channel
 		// But first let's make it work
@@ -176,6 +146,49 @@ func PerformCopy(srcClient, dstClient interface{}, srcPrefix, dstPrefix string, 
 		}
 	}
 	return nil
+}
+
+// DownloadUpload concurrently downloads a file and uploads them to its destination
+func DownloadUpload(srcClient, dstClient interface{}, srcPrefix, fromPath, dstPrefix, toPath, currentLinePadded string, totalFiles int, bufferSize float64, failureCount *int, bwg *utils.BoundedWaitGroup) {
+
+	downUpGroup, ctx := errgroup.WithContext(context.Background())
+
+	newBufferSize := (int64)(bufferSize * 1024 * 1024) // may not be super accurate
+	buf := buffer.New(newBufferSize)
+	pipeReader, pipeWriter := nio.Pipe(buf) // pipe: writer (download) -> buffer -> reader (upload)
+
+	log.Printf("[%s/%d] copy: %s://%s -> %s://%s", currentLinePadded, totalFiles, srcPrefix, fromPath, dstPrefix, toPath)
+
+	downUpGroup.Go(func() error {
+		defer pipeWriter.Close()
+		log.Printf("Downloading %s", fromPath)
+
+		err := Download(ctx, srcClient, srcPrefix, fromPath, pipeWriter)
+		if err != nil {
+			log.Errorln(err, fmt.Sprintf(" failed download from src: file: %s", fromPath))
+			return err
+		}
+		return nil
+	})
+
+	downUpGroup.Go(func() error {
+		defer pipeReader.Close()
+		log.Printf("UPLOADING %s -> %s", fromPath, toPath)
+
+		err := Upload(ctx, dstClient, dstPrefix, toPath, fromPath, pipeReader)
+		if err != nil {
+			log.Errorln(err, fmt.Sprintf(" failed upload to dst: file: %s", toPath))
+			return err
+		}
+		log.Printf("[%s/%d] done: %s://%s -> %s://%s", currentLinePadded, totalFiles, srcPrefix, fromPath, dstPrefix, toPath)
+		return nil
+	})
+
+	if err := downUpGroup.Wait(); err != nil {
+		*failureCount++
+	}
+	bwg.Done()
+
 }
 
 // GetListOfFiles gets relative paths from the provided path
@@ -218,8 +231,8 @@ func GetListOfFiles(client interface{}, prefix, path string) ([]string, error) {
 }
 
 // Download downloads a single file from path into an io.Writer
-func Download(srcClient interface{}, srcPrefix, srcPath string, writer io.Writer) error {
-	ctx, cancel := context.WithCancel(context.Background())
+func Download(ctx context.Context, srcClient interface{}, srcPrefix, srcPath string, writer io.Writer) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	switch srcPrefix {
@@ -251,8 +264,8 @@ func Download(srcClient interface{}, srcPrefix, srcPath string, writer io.Writer
 }
 
 // Upload uploads a single file provided as an io.Reader array to path
-func Upload(dstClient interface{}, dstPrefix, dstPath, srcPath string, reader io.Reader) error {
-	ctx, cancel := context.WithCancel(context.Background())
+func Upload(ctx context.Context, dstClient interface{}, dstPrefix, dstPath, srcPath string, reader io.Reader) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	switch dstPrefix {
