@@ -34,7 +34,7 @@ func NewRootCmd(args []string) *cobra.Command {
 		Long:  ``,
 	}
 
-	cmd.PersistentFlags().StringVarP(&flags.loglevel, "log-level", "l", "info", "Set log level [error, warn, info, debug, trace]")
+	cmd.PersistentFlags().StringVarP(&flags.loglevel, "log-level", "l", "", "Set log level [error, warn, info, debug, trace] (default: info)")
 
 	cobra.OnInitialize(initLogging)
 
@@ -47,9 +47,18 @@ func NewRootCmd(args []string) *cobra.Command {
 }
 
 func initLogging() {
-	loglevel, err := log.ParseLevel(flags.loglevel)
-	if err != nil {
-		log.Fatalf("Failed to set log level from '--log-level' flag")
+	loglevel := log.InfoLevel
+	var err error
+
+	ll := flags.loglevel
+	if ll == "" {
+		ll = os.Getenv("LOG_LEVEL")
+	}
+	if ll != "" {
+		loglevel, err = log.ParseLevel(ll)
+		if err != nil {
+			log.Fatalf("Failed to set log level from '--log-level' flag or env var LOG_LEVEL")
+		}
 	}
 	log.SetLevel(loglevel)
 }
