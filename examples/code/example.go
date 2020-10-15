@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/iwilltry42/skbn/pkg/skbn"
 )
@@ -18,5 +19,5 @@ func main() {
 		log.Fatal(err)
 	}
 	elapsed := time.Since(start)
-	log.Printf("Copy execution time: %s", elapsed)
+	log.Infof("Copy execution time: %s", elapsed)
 }

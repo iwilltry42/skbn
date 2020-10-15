@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/iwilltry42/skbn/pkg/skbn"
 
