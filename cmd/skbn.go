@@ -12,6 +12,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// RootFlags describes a struct that holds flags that can be set on root level of the command
+type RootFlags struct {
+	loglevel string
+}
+
+var flags = RootFlags{}
+
 func main() {
 	cmd := NewRootCmd(os.Args[1:])
 	if err := cmd.Execute(); err != nil {
@@ -27,12 +34,24 @@ func NewRootCmd(args []string) *cobra.Command {
 		Long:  ``,
 	}
 
+	cmd.PersistentFlags().StringVarP(&flags.loglevel, "log-level", "l", "info", "Set log level [error, warn, info, debug, trace]")
+
+	cobra.OnInitialize(initLogging)
+
 	out := cmd.OutOrStdout()
 
 	cmd.AddCommand(NewCpCmd(out))
 	cmd.AddCommand(NewVersionCmd(out))
 
 	return cmd
+}
+
+func initLogging() {
+	loglevel, err := log.ParseLevel(flags.loglevel)
+	if err != nil {
+		log.Fatalf("Failed to set log level from '--log-level' flag")
+	}
+	log.SetLevel(loglevel)
 }
 
 type cpCmd struct {
