@@ -34,7 +34,7 @@ func NewRootCmd(args []string) *cobra.Command {
 		Long:  ``,
 	}
 
-	cmd.PersistentFlags().StringVarP(&flags.loglevel, "log-level", "l", "", "Set log level [error, warn, info, debug, trace] (default: info)")
+	cmd.PersistentFlags().StringVar(&flags.loglevel, "log-level", "", "Set log level [error, warn, info, debug, trace] (default: info)")
 
 	cobra.OnInitialize(initLogging)
 
